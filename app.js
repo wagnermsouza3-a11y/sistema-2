@@ -22,7 +22,8 @@ const STATE = {
     searchQuery: '',
     filterStatus: 'all',
     detailAccountId: null,
-    confirmCallback: null
+    confirmCallback: null,
+    viewMonth: null   // mês sendo visualizado no dashboard (null = mês atual)
   }
 };
 
@@ -48,6 +49,31 @@ function getCurrentDay() {
   return new Date().getDate();
 }
 
+// Retorna o mês que está sendo visualizado no dashboard (padrão: mês atual)
+function getViewMonth() {
+  return STATE.ui.viewMonth || getCurrentMonth();
+}
+
+// Soma/subtrai meses a partir de uma string 'YYYY-MM'
+function shiftMonth(monthStr, delta) {
+  const [y, m] = monthStr.split('-').map(Number);
+  const d = new Date(y, (m - 1) + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// Navega para o mês anterior/próximo (delta: -1 ou +1)
+function changeViewMonth(delta) {
+  STATE.ui.viewMonth = shiftMonth(getViewMonth(), delta);
+  ensureMonthRecords(STATE.ui.viewMonth);
+  renderDashboard();
+}
+
+// Volta direto para o mês atual
+function goToCurrentMonth() {
+  STATE.ui.viewMonth = getCurrentMonth();
+  renderDashboard();
+}
+
 function formatMonthLabel(monthStr) {
   const [year, month] = monthStr.split('-');
   const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -67,17 +93,27 @@ function formatDateTime(ts) {
   return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
-function getAccountStatus(account) {
-  const currentMonth = getCurrentMonth();
+function getAccountStatus(account, month = getViewMonth()) {
   const today = getCurrentDay();
-  const record = STATE.records[currentMonth]?.[account.id];
-  
+  const record = STATE.records[month]?.[account.id];
+
   if (record?.status === 'paid') return 'paid';
-  
-  const due = account.dueDay;
-  if (today > due)           return 'late';
-  if (today === due)          return 'today';
-  if (due - today <= 5)      return 'soon';
+
+  const realCurrentMonth = getCurrentMonth();
+
+  // Mês atual real: aplica a lógica normal de vencimento por dia
+  if (month === realCurrentMonth) {
+    const due = account.dueDay;
+    if (today > due)      return 'late';
+    if (today === due)    return 'today';
+    if (due - today <= 5) return 'soon';
+    return 'pending';
+  }
+
+  // Mês passado e não foi paga = atrasada (histórico)
+  if (month < realCurrentMonth) return 'late';
+
+  // Mês futuro = ainda pendente
   return 'pending';
 }
 
@@ -191,21 +227,25 @@ function checkMonthlyReset() {
   saveState();
 }
 
-function ensureCurrentMonthRecords() {
-  const currentMonth = getCurrentMonth();
+function ensureMonthRecords(month = getCurrentMonth()) {
   let dirty = false;
-  if (!STATE.records[currentMonth]) {
-    STATE.records[currentMonth] = {};
+  if (!STATE.records[month]) {
+    STATE.records[month] = {};
     dirty = true;
   }
   STATE.accounts.forEach(acc => {
-    if (!STATE.records[currentMonth][acc.id]) {
-      STATE.records[currentMonth][acc.id] = { status: 'pending', paidAt: null };
+    if (!STATE.records[month][acc.id]) {
+      STATE.records[month][acc.id] = { status: 'pending', paidAt: null };
       dirty = true;
     }
   });
   // Salva apenas se algo foi adicionado
   if (dirty) saveState();
+}
+
+// Mantido por compatibilidade com chamadas existentes
+function ensureCurrentMonthRecords() {
+  ensureMonthRecords(getCurrentMonth());
 }
 
 // ================================================================
@@ -214,16 +254,23 @@ function ensureCurrentMonthRecords() {
 
 function renderDashboard() {
   const today = getCurrentDay();
-  const currentMonth = getCurrentMonth();
+  const viewMonth = getViewMonth();
+  const isCurrentMonth = viewMonth === getCurrentMonth();
 
-  // Garante que os registros do mês existam
-  ensureCurrentMonthRecords();
+  // Garante que os registros do mês visualizado existam
+  ensureMonthRecords(viewMonth);
 
   // Labels do mês
   const monthLabelEl = document.getElementById('month-label');
   const todayLabelEl = document.getElementById('today-label');
-  if (monthLabelEl) monthLabelEl.textContent = formatMonthLabel(currentMonth);
-  if (todayLabelEl) todayLabelEl.textContent = `Hoje é dia ${today}`;
+  if (monthLabelEl) monthLabelEl.textContent = formatMonthLabel(viewMonth);
+  if (todayLabelEl) {
+    todayLabelEl.innerHTML = isCurrentMonth
+      ? `Hoje é dia ${today}`
+      : `Visualizando outro mês <button id="btn-today-month" class="btn-today-pill">Voltar para hoje</button>`;
+    const btnToday = document.getElementById('btn-today-month');
+    if (btnToday) btnToday.addEventListener('click', goToCurrentMonth);
+  }
 
   // Filtra e busca
   let accounts = [...STATE.accounts];
@@ -236,7 +283,7 @@ function renderDashboard() {
   }
 
   // Calcula status de todas as contas
-  const withStatus = accounts.map(a => ({ ...a, status: getAccountStatus(a) }));
+  const withStatus = accounts.map(a => ({ ...a, status: getAccountStatus(a, viewMonth) }));
 
   // Aplica filtro por chip
   let filtered = withStatus;
@@ -253,8 +300,8 @@ function renderDashboard() {
     return a.dueDay - b.dueDay;
   });
 
-  // Contadores para os cards de resumo (sempre baseado em TODAS as contas)
-  const allWithStatus = STATE.accounts.map(a => ({ ...a, status: getAccountStatus(a) }));
+  // Contadores para os cards de resumo (sempre baseado em TODAS as contas, no mês visualizado)
+  const allWithStatus = STATE.accounts.map(a => ({ ...a, status: getAccountStatus(a, viewMonth) }));
   const counts = { late: 0, today: 0, soon: 0, paid: 0, pending: 0 };
   allWithStatus.forEach(a => { counts[a.status] = (counts[a.status] || 0) + 1; });
 
@@ -324,7 +371,7 @@ function renderDashboard() {
     group.forEach(acc => {
       const statusLabel = getStatusText(acc.status);
       const icon = getAccountIcon(acc.name);
-      const record = STATE.records[currentMonth]?.[acc.id];
+      const record = STATE.records[viewMonth]?.[acc.id];
       const paidInfo = record?.paidAt ? `Paga em ${formatDate(record.paidAt)}` : '';
       html += `
         <div class="account-card status-${acc.status}"
@@ -461,9 +508,9 @@ function openDetail(accountId) {
   if (!account) return;
 
   STATE.ui.detailAccountId = accountId;
-  const currentMonth = getCurrentMonth();
-  const status = getAccountStatus(account);
-  const record = STATE.records[currentMonth]?.[account.id];
+  const viewMonth = getViewMonth();
+  const status = getAccountStatus(account, viewMonth);
+  const record = STATE.records[viewMonth]?.[account.id];
 
   document.getElementById('detail-title').textContent = account.name;
   document.getElementById('detail-name').textContent = account.name;
@@ -544,8 +591,6 @@ function saveAccount() {
     return;
   }
 
-  const currentMonth = getCurrentMonth();
-
   if (id) {
     // Edit existing
     const idx = STATE.accounts.findIndex(a => a.id === id);
@@ -567,9 +612,9 @@ function saveAccount() {
     };
     STATE.accounts.push(newAccount);
 
-    // Create record for current month
-    if (!STATE.records[currentMonth]) STATE.records[currentMonth] = {};
-    STATE.records[currentMonth][newAccount.id] = { status: 'pending', paidAt: null };
+    // Cria registro no mês atual real e também no mês que está sendo visualizado
+    ensureMonthRecords(getCurrentMonth());
+    ensureMonthRecords(getViewMonth());
 
     showToast('Conta adicionada! 🎉', 'success');
   }
@@ -586,24 +631,24 @@ function markAsPaid(accountId) {
   const account = STATE.accounts.find(a => a.id === accountId);
   if (!account) return;
 
-  const currentMonth = getCurrentMonth();
-  if (!STATE.records[currentMonth]) STATE.records[currentMonth] = {};
+  const month = getViewMonth();
+  if (!STATE.records[month]) STATE.records[month] = {};
 
-  const status = getAccountStatus(account);
+  const status = getAccountStatus(account, month);
   if (status === 'paid') {
     showToast('Conta já está paga!', 'info');
     return;
   }
 
   const now = Date.now();
-  STATE.records[currentMonth][accountId] = { status: 'paid', paidAt: now };
+  STATE.records[month][accountId] = { status: 'paid', paidAt: now };
 
   // Add to history
   STATE.history.push({
     id:          generateId(),
     accountId,
     accountName: account.name,
-    month:       currentMonth,
+    month:       month,
     dueDay:      account.dueDay,
     paidAt:      now
   });
@@ -989,6 +1034,10 @@ function bindSummaryCardFilters() {
 // EVENT BINDINGS
 // ================================================================
 function bindEvents() {
+  // Navegação de mês (setas anterior/próximo)
+  document.getElementById('btn-prev-month')?.addEventListener('click', () => changeViewMonth(-1));
+  document.getElementById('btn-next-month')?.addEventListener('click', () => changeViewMonth(1));
+
   // Navigation — só nos botões que têm data-view definido
   document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
     btn.addEventListener('click', () => navigateTo(btn.dataset.view));
@@ -1156,6 +1205,9 @@ function addSampleData() {
 function init() {
   // Load data
   loadState();
+
+  // Mês visualizado inicial = mês atual
+  STATE.ui.viewMonth = getCurrentMonth();
 
   // Monthly reset check
   checkMonthlyReset();
