@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Minhas Contas" />
+  <meta name="description" content="Gerencie suas contas mensais de forma simples e eficiente. Saiba quais contas foram pagas, quais estão atrasadas e quais vencem em breve." />
+  <title>Minhas Contas</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== SPLASH SCREEN ===== -->
+  <div id="splash" class="splash">
+    <div class="splash-content">
+      <div class="splash-icon">💳</div>
+      <h1 class="splash-title">Minhas Contas</h1>
+      <p class="splash-subtitle">Carregando...</p>
+      <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- ===== APP SHELL ===== -->
+  <div id="app" class="app hidden">
+
+    <!-- TOP HEADER -->
+    <header class="top-header" id="top-header">
+      <div class="header-left">
+        <button class="icon-btn" id="btn-menu" title="Menu" aria-label="Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="header-brand">
+          <span class="brand-icon">💳</span>
+          <span class="brand-name">Minhas Contas</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" id="btn-search-toggle" title="Buscar" aria-label="Buscar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-theme" title="Alternar tema" aria-label="Alternar tema">
+          <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="hidden"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-notif" title="Ativar notificações" aria-label="Ativar notificações">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- SEARCH BAR -->
+    <div class="search-bar hidden" id="search-bar">
+      <div class="search-input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar conta..." autocomplete="off" />
+        <button class="icon-btn-sm" id="btn-search-clear" title="Limpar">✕</button>
+      </div>
+      <div class="filter-chips">
+        <button class="chip active" data-filter="all">Todas</button>
+        <button class="chip" data-filter="late">Atrasadas</button>
+        <button class="chip" data-filter="today">Hoje</button>
+        <button class="chip" data-filter="soon">Em Breve</button>
+        <button class="chip" data-filter="paid">Pagas</button>
+        <button class="chip" data-filter="pending">Pendentes</button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content" id="main-content">
+
+      <!-- ===== VIEW: DASHBOARD ===== -->
+      <section id="view-dashboard" class="view active">
+
+        <!-- Month Navigator -->
+        <div class="month-nav">
+          <div class="month-info">
+            <span class="month-label" id="month-label">Junho 2026</span>
+            <span class="month-sub" id="today-label">Hoje é dia 18</span>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-section">
+          <div class="progress-header">
+            <span class="progress-label">Progresso do Mês</span>
+            <span class="progress-count" id="progress-count">0 de 0 pagas</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+          </div>
+          <div class="progress-pct" id="progress-pct">0%</div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+          <div class="summary-card late" id="summary-late">
+            <div class="summary-icon">🔴</div>
+            <div class="summary-info">
+              <span class="summary-num" id="num-late">0</span>
+              <span class="summary-lbl">Atrasadas</span>
+            </div>
+          </div>
+          <div class="summary-card today" id="summary-today">
+            <div class="summary-icon">🟡</div>
+            <div class="summary-info">
+              <span class="summary-num" id="num-today">0</span>
+              <span class="summary-lbl">Hoje</span>
+            </div>
+          </div>
+          <div class="summary-card soon" id="summary-soon">
+            <div class="summary-icon">🔵</div>
+            <div class="summary-info">
+              <span class="summary-num" id="num-soon">0</span>
+              <span class="summary-lbl">Em Breve</span>
+            </div>
+          </div>
+          <div class="summary-card paid" id="summary-paid">
+            <div class="summary-icon">🟢</div>
+            <div class="summary-info">
+              <span class="summary-num" id="num-paid">0</span>
+              <span class="summary-lbl">Pagas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accounts List -->
+        <div class="section-header">
+          <h2 class="section-title">Contas do Mês</h2>
+        </div>
+        <!-- empty-state FORA do accounts-list para não ser destruído pelo innerHTML -->
+        <div class="empty-state" id="empty-state" style="display:none">
+          <div class="empty-icon">📋</div>
+          <h3>Nenhuma conta cadastrada</h3>
+          <p>Toque no botão <strong>+</strong> para adicionar sua primeira conta.</p>
+        </div>
+        <div id="accounts-list" class="accounts-list"></div>
+
+      </section>
+
+      <!-- ===== VIEW: HISTÓRICO ===== -->
+      <section id="view-history" class="view">
+        <div class="view-header">
+          <h2>📅 Histórico de Pagamentos</h2>
+        </div>
+        <div class="history-filter">
+          <label for="history-month-filter">Filtrar por mês:</label>
+          <select id="history-month-filter">
+            <option value="all">Todos os meses</option>
+          </select>
+        </div>
+        <div id="history-list" class="history-list">
+          <div class="empty-state">
+            <div class="empty-icon">📅</div>
+            <h3>Nenhum histórico ainda</h3>
+            <p>Os pagamentos marcados aparecerão aqui.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== VIEW: CONFIGURAÇÕES ===== -->
+      <section id="view-settings" class="view">
+        <div class="view-header">
+          <h2>⚙️ Configurações</h2>
+        </div>
+        <div class="settings-list">
+          <div class="settings-group">
+            <div class="settings-group-title">Aparência</div>
+            <div class="settings-item" id="setting-theme">
+              <div class="settings-item-icon">🌙</div>
+              <div class="settings-item-info">
+                <span class="settings-item-name">Modo Escuro</span>
+                <span class="settings-item-desc">Alternar entre claro e escuro</span>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="toggle-dark" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-title">Notificações</div>
+            <div class="settings-item" id="setting-notif">
+              <div class="settings-item-icon">🔔</div>
+              <div class="settings-item-info">
+                <span class="settings-item-name">Notificações</span>
+                <span class="settings-item-desc" id="notif-status-text">Receber alertas de vencimento</span>
+              </div>
+              <button class="btn-sm btn-primary" id="btn-enable-notif">Ativar</button>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-icon">🔕</div>
+              <div class="settings-item-info">
+                <span class="settings-item-name">Testar Notificação</span>
+                <span class="settings-item-desc">Enviar uma notificação de teste</span>
+              </div>
+              <button class="btn-sm btn-outline" id="btn-test-notif">Testar</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-title">Dados</div>
+            <div class="settings-item">
+              <div class="settings-item-icon">📤</div>
+              <div class="settings-item-info">
+                <span class="settings-item-name">Exportar Backup</span>
+                <span class="settings-item-desc">Salvar dados em arquivo JSON</span>
+              </div>
+              <button class="btn-sm btn-outline" id="btn-export">Exportar</button>
+            </div>
+            <div class="settings-item">
+              <div class="settings-item-icon">📥</div>
+              <div class="settings-item-info">
+                <span class="settings-item-name">Importar Backup</span>
+                <span class="settings-item-desc">Restaurar dados de arquivo JSON</span>
+              </div>
+              <button class="btn-sm btn-outline" id="btn-import">Importar</button>
+              <input type="file" id="import-file" accept=".json" class="hidden" />
+            </div>
+            <div class="settings-item danger">
+              <div class="settings-item-icon">🗑️</div>
+              <div class="settings-item-info">
+                <span class="settings-item-name">Limpar Todos os Dados</span>
+                <span class="settings-item-desc">Remove todas as contas e histórico</span>
+              </div>
+              <button class="btn-sm btn-danger" id="btn-clear-all">Limpar</button>
+            </div>
+          </div>
+          <div class="settings-group">
+            <div class="settings-group-title">Sobre</div>
+            <div class="settings-item">
+              <div class="settings-item-icon">ℹ️</div>
+              <div class="settings-item-info">
+                <span class="settings-item-name">Minhas Contas</span>
+                <span class="settings-item-desc">v1.0.0 — Funciona 100% offline</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <button class="nav-item active" data-view="dashboard" id="nav-dashboard" aria-label="Painel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Painel</span>
+      </button>
+      <button class="nav-item" data-view="history" id="nav-history" aria-label="Histórico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><line x1="12" y1="7" x2="12" y2="12"/><line x1="12" y1="12" x2="15" y2="14"/></svg>
+        <span>Histórico</span>
+      </button>
+
+      <!-- Botão + integrado ao grid (sobe acima da nav via transform) -->
+      <button class="nav-fab-btn" id="btn-add" title="Adicionar Conta" aria-label="Adicionar Conta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+
+      <button class="nav-item" data-view="settings" id="nav-settings" aria-label="Configurações">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        <span>Config.</span>
+      </button>
+
+      <!-- Div fantasma para balancear o grid (simetria com Painel+Histórico à esquerda) -->
+      <div class="nav-phantom" aria-hidden="true"></div>
+    </nav>
+
+  </div>
+
+  <!-- ===== MODAL: ADD/EDIT ACCOUNT ===== -->
+  <div class="modal-overlay hidden" id="modal-account">
+    <div class="modal" id="modal-account-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Adicionar Conta</h3>
+        <button class="icon-btn" id="btn-modal-close" aria-label="Fechar">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="account-id" />
+        <div class="form-group">
+          <label for="account-name">Nome da Conta <span class="required">*</span></label>
+          <input type="text" id="account-name" placeholder="Ex: Aluguel, Nubank, Internet..." maxlength="50" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="account-due">Dia de Vencimento <span class="required">*</span></label>
+          <div class="day-picker" id="day-picker">
+            <!-- Days 1-31 rendered by JS -->
+          </div>
+          <input type="hidden" id="account-due" />
+        </div>
+        <div class="form-group">
+          <label for="account-obs">Observação <span class="optional">(opcional)</span></label>
+          <textarea id="account-obs" placeholder="Anotações sobre esta conta..." rows="2" maxlength="200"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="btn-cancel-account">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-account">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="18" height="18"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: ACCOUNT DETAIL ===== -->
+  <div class="modal-overlay hidden" id="modal-detail">
+    <div class="modal" id="modal-detail-box" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+      <div class="modal-header">
+        <button class="icon-btn" id="btn-detail-back" aria-label="Voltar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <h3 class="modal-title" id="detail-title">Detalhes</h3>
+        <div style="width:40px"></div>
+      </div>
+      <div class="modal-body">
+        <div class="detail-card" id="detail-card">
+          <div class="detail-status-badge" id="detail-badge"></div>
+          <div class="detail-name" id="detail-name"></div>
+          <div class="detail-due" id="detail-due"></div>
+          <div class="detail-obs" id="detail-obs"></div>
+          <div class="detail-paid-info" id="detail-paid-info"></div>
+        </div>
+        <div class="detail-actions">
+          <button class="detail-btn pay-btn" id="btn-mark-paid">
+            <span>✅</span> Marcar como Paga
+          </button>
+          <button class="detail-btn edit-btn" id="btn-edit-account">
+            <span>✏️</span> Editar Conta
+          </button>
+          <button class="detail-btn delete-btn" id="btn-delete-account">
+            <span>🗑️</span> Excluir Conta
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: CONFIRM ===== -->
+  <div class="modal-overlay hidden" id="modal-confirm">
+    <div class="modal modal-sm" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3 class="modal-title" id="confirm-title">Confirmar</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="btn-confirm-cancel">Cancelar</button>
+        <button class="btn btn-danger" id="btn-confirm-ok">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch((err) => {
+          console.warn("Falha ao registrar service worker:", err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
