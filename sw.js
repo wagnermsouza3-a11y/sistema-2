@@ -1,14 +1,13 @@
-const CACHE_NAME = "minhas-contas-v1";
+const CACHE_NAME = "minhas-contas-v2";
 const ASSETS = [
   "./index.html",
   "./style.css",
   "./app.js",
   "./manifest.json",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
+  "./icon-192.png",
+  "./icon-512.png",
 ];
 
-// Instala e guarda os arquivos principais no cache (funciona offline)
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
@@ -16,7 +15,6 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// Remove caches antigos quando o app for atualizado
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -28,7 +26,6 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Serve do cache primeiro, busca na rede se não tiver (e atualiza o cache)
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
