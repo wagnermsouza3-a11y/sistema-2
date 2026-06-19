@@ -1320,3 +1320,63 @@ input, textarea, select { font-family: inherit; }
   background: var(--border);
   border-radius: var(--r-full);
 }
+
+/* ================================================================
+   NAVEGAÇÃO DE MÊS (setas anterior/próximo)
+   ================================================================ */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.month-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.month-nav-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.month-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.month-nav-btn:active {
+  transform: scale(0.9);
+}
+
+.month-info {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.btn-today-pill {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(59, 130, 246, 0.25);
+  color: inherit;
+  cursor: pointer;
+}
+
+.btn-today-pill:hover {
+  background: rgba(59, 130, 246, 0.4);
+}
